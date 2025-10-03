@@ -112,7 +112,7 @@ export default function EmojiWiggler() {
       });
 
       const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: true });
       if (!ctx) throw new Error("Could not get canvas context");
 
       // Limit canvas size to reduce file size
@@ -121,9 +121,9 @@ export default function EmojiWiggler() {
       canvas.width = Math.floor(img.width * scale);
       canvas.height = Math.floor(img.height * scale);
 
-      // Optimize for file size: fewer frames, lower FPS
-      const frameCount = 12;
-      const frameDuration = 150; // ms per frame (~6.7 FPS)
+      // High framerate for smooth animation
+      const frameCount = 60;
+      const frameDuration = 33; // ms per frame (30 FPS)
 
       for (let i = 0; i < frameCount; i++) {
         const progress = i / frameCount;
@@ -139,6 +139,7 @@ export default function EmojiWiggler() {
           Math.sin(time * 8) * 3 +
           Math.cos(time * 6) * 5;
 
+        // Clear with transparent background
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.save();
@@ -162,25 +163,27 @@ export default function EmojiWiggler() {
         );
       }
 
+      // Generate GIF with transparency support
       await ffmpeg.exec([
         "-framerate",
-        `${1000 / frameDuration}`,
+        `${1000 / frameDuration}`, // Set input framerate (30 FPS)
         "-i",
-        "frame%03d.png",
+        "frame%03d.png", // Input PNG sequence with padding (frame000.png, frame001.png, etc.)
         "-vf",
-        "split[s0][s1];[s0]palettegen=max_colors=64:reserve_transparent=0[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2",
+        // Video filter: split stream, generate palette with 63 colors + transparency, apply palette with dithering
+        "split[s0][s1];[s0]palettegen=max_colors=12:reserve_transparent=1[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2:alpha_threshold=128",
         "-loop",
-        "0",
+        "0", // Loop infinitely (0 = infinite loop)
         "-fs",
-        "120k",
-        "output.gif",
+        "90k", // File size limit: maximum 90KB
+        "output.gif", // Output filename
       ]);
 
       const data = await ffmpeg.readFile("output.gif");
       const arrayData = new Uint8Array(data as Uint8Array);
       const gifBlob = new Blob([arrayData], { type: "image/gif" });
       const gifUrl = URL.createObjectURL(gifBlob);
-      
+
       // Store file size for display
       setGifSize(gifBlob.size);
       setGifUrl(gifUrl);
@@ -332,8 +335,10 @@ export default function EmojiWiggler() {
                       {gifSize && (
                         <p className="text-xs text-gray-500">
                           File size: {formatFileSize(gifSize)}
-                          {gifSize <= 120 * 1024 && (
-                            <span className="text-green-400 ml-2">✓ Under 120KB</span>
+                          {gifSize <= 110 * 1024 && (
+                            <span className="text-green-400 ml-2">
+                              ✓ Under 110KB
+                            </span>
                           )}
                         </p>
                       )}
