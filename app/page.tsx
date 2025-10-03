@@ -22,13 +22,12 @@ export default function EmojiWiggler() {
   const loadFFmpeg = async () => {
     if (ffmpegLoaded || !ffmpegScriptReady) return;
 
-    const baseURL =
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core/dist/umd";
+    const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core/dist/umd";
 
     if (!ffmpegRef.current) {
       ffmpegRef.current = new FFmpeg();
     }
-    
+
     const ffmpeg = ffmpegRef.current;
 
     ffmpeg.on("log", ({ message }) => {
@@ -112,19 +111,32 @@ export default function EmojiWiggler() {
 
       for (let i = 0; i < frameCount; i++) {
         const progress = i / frameCount;
-        const offsetX = Math.sin(progress * Math.PI * 4) * 10; // Left/right wiggle
+
+        // Create crazy wobble with multiple sine waves at different frequencies
+        const time = progress * Math.PI * 2;
+        const offsetX =
+          Math.sin(time * 3) * 8 +
+          Math.sin(time * 7) * 4 +
+          Math.cos(time * 5) * 6;
+        const offsetY =
+          Math.cos(time * 4) * 6 +
+          Math.sin(time * 8) * 3 +
+          Math.cos(time * 6) * 5;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.save();
-        // Shrink by 80% and center, then add horizontal wiggle
-        ctx.translate(canvas.width / 2 + offsetX, canvas.height / 2);
+        // Shrink by 80% and center, then add crazy wobble
+        ctx.translate(canvas.width / 2 + offsetX, canvas.height / 2 + offsetY);
         ctx.scale(0.8, 0.8);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
         ctx.restore();
 
-        const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(b!), "image/png");
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((b) => {
+            if (b) resolve(b);
+            else reject(new Error("Failed to create blob"));
+          }, "image/png");
         });
 
         const frameData = await fetchFile(blob);
@@ -264,7 +276,7 @@ export default function EmojiWiggler() {
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Make it Wiggle!
+                    Make it Wiggle
                   </>
                 )}
               </Button>
@@ -285,7 +297,7 @@ export default function EmojiWiggler() {
                       className="max-w-[200px] max-h-[200px] mx-auto"
                     />
                     <p className="text-sm text-gray-400">
-                      Your wiggling emoji is ready!
+                      Your wiggling emoji is ready
                     </p>
                   </div>
                 ) : (
@@ -319,7 +331,7 @@ export default function EmojiWiggler() {
               <p className="text-sm text-gray-400">
                 Upload a PNG emoji, and we'll create a fun wiggling animation
                 with rotation, scaling, and movement effects. Perfect for Slack
-                reactions and social media!
+                reactions and social media
               </p>
             </Card>
           </div>
