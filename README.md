@@ -1,30 +1,16 @@
-# Wiggle GIF generator
+# Wiggle Emoji Generator
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+https://wiggle.cafe
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/plmrry/v0-wiggle-gif-generator)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/ocTkR0vgZIV)
 
-## Overview
+Make a PNG file into a wiggling GIF: `:lfg-intense:`
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Before
 
-## Deployment
+<img width="128" height="128" alt="ack" src="https://github.com/user-attachments/assets/ef97cbe2-ce67-48e3-9352-301748fe09ca" />
 
-Your project is live at:
+## After
 
-**[https://vercel.com/plmrry/v0-wiggle-gif-generator](https://vercel.com/plmrry/v0-wiggle-gif-generator)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/projects/ocTkR0vgZIV](https://v0.app/chat/projects/ocTkR0vgZIV)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+![ack-wiggle (6)](https://github.com/user-attachments/assets/9196ef22-0425-475c-b9a0-a6eee8229849)

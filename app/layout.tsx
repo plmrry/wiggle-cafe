@@ -5,8 +5,8 @@ import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Emoji Wiggler - Make Your Emojis Wiggle",
-  description: "Transform your PNG emojis into wiggling GIF animations",
+  title: "Emoji Wiggler - Make Your Emoji Wiggle",
+  description: "Make your emoji wiggle — Transform static PNG files into wiggling GIFs",
   generator: "v0.app",
 };
 
