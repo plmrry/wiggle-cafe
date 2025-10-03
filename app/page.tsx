@@ -14,6 +14,7 @@ export default function EmojiWiggler() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [originalFilename, setOriginalFilename] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
@@ -61,6 +62,7 @@ export default function EmojiWiggler() {
 
     const file = e.dataTransfer.files[0];
     if (file && file.type === "image/png") {
+      setOriginalFilename(file.name);
       const reader = new FileReader();
       reader.onload = (event) => {
         setImage(event.target?.result as string);
@@ -73,6 +75,7 @@ export default function EmojiWiggler() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === "image/png") {
+      setOriginalFilename(file.name);
       const reader = new FileReader();
       reader.onload = (event) => {
         setImage(event.target?.result as string);
@@ -179,9 +182,17 @@ export default function EmojiWiggler() {
   const downloadGif = () => {
     if (!gifUrl) return;
 
+    // Generate filename based on original filename
+    let filename = "wiggling-emoji.gif";
+    if (originalFilename) {
+      // Remove the extension and add "-wiggle.gif"
+      const nameWithoutExt = originalFilename.replace(/\.[^/.]+$/, "");
+      filename = `${nameWithoutExt}-wiggle.gif`;
+    }
+
     const a = document.createElement("a");
     a.href = gifUrl;
-    a.download = "wiggling-emoji.gif";
+    a.download = filename;
     a.click();
   };
 
