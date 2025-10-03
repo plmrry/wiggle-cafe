@@ -106,8 +106,8 @@ export default function EmojiWiggler() {
       canvas.width = img.width;
       canvas.height = img.height;
 
-      const frameCount = 20;
-      const frameDuration = 50; // ms per frame
+      const frameCount = 60;
+      const frameDuration = 33; // ms per frame (~30 FPS)
 
       for (let i = 0; i < frameCount; i++) {
         const progress = i / frameCount;
@@ -322,17 +322,6 @@ export default function EmojiWiggler() {
                 <Download className="w-4 h-4 mr-2" />
                 Download GIF
               </Button>
-            </Card>
-          </div>
-
-          <div className="mt-12 text-center">
-            <Card className="p-6 bg-gray-950 border-gray-800">
-              <h3 className="font-semibold mb-2 text-white">How it works</h3>
-              <p className="text-sm text-gray-400">
-                Upload a PNG emoji, and we'll create a fun wiggling animation
-                with rotation, scaling, and movement effects. Perfect for Slack
-                reactions and social media
-              </p>
             </Card>
           </div>
         </div>
