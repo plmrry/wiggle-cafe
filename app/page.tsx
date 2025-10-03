@@ -296,7 +296,7 @@ export default function EmojiWiggler() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
               <Sparkles className="w-8 h-8 text-white" />
-              <h1 className="text-5xl font-bold text-white">Emoji Wigglerrr</h1>
+              <h1 className="text-5xl font-bold text-white">Emoji Wiggler</h1>
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <p className="text-lg text-gray-400">Make it wiggle</p>
