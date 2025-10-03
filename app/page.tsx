@@ -172,7 +172,7 @@ export default function EmojiWiggler() {
         "-loop",
         "0",
         "-fs",
-        "128k",
+        "120k",
         "output.gif",
       ]);
 
@@ -332,8 +332,8 @@ export default function EmojiWiggler() {
                       {gifSize && (
                         <p className="text-xs text-gray-500">
                           File size: {formatFileSize(gifSize)}
-                          {gifSize <= 128 * 1024 && (
-                            <span className="text-green-400 ml-2">✓ Under 128KB</span>
+                          {gifSize <= 120 * 1024 && (
+                            <span className="text-green-400 ml-2">✓ Under 120KB</span>
                           )}
                         </p>
                       )}
