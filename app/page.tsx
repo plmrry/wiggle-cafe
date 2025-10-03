@@ -9,6 +9,10 @@ import { Upload, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+function œ(...args: unknown[]) {
+  console.log(...args);
+}
+
 export default function EmojiWiggler() {
   const [image, setImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,6 +30,52 @@ export default function EmojiWiggler() {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  const isHeifFile = useCallback((file: File): boolean => {
+    return (
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif")
+    );
+  }, []);
+
+  const convertFileToDataURL = useCallback(
+    async (file: File): Promise<string> => {
+      œ("AHOY");
+      if (isHeifFile(file)) {
+        // For HEIF files, we'll use createImageBitmap which has better support
+        try {
+          const imageBitmap = await createImageBitmap(file);
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("Could not get canvas context");
+
+          canvas.width = imageBitmap.width;
+          canvas.height = imageBitmap.height;
+          ctx.drawImage(imageBitmap, 0, 0);
+
+          return canvas.toDataURL("image/png");
+        } catch (error) {
+          console.error("Error converting HEIF file:", error);
+          throw new Error(
+            "Failed to convert HEIF file. Your browser may not support HEIF images."
+          );
+        }
+      } else {
+        // For other formats, use FileReader as before
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve(event.target?.result as string);
+          };
+          reader.onerror = () => reject(new Error("Failed to read file"));
+          reader.readAsDataURL(file);
+        });
+      }
+    },
+    [isHeifFile]
+  );
 
   const loadFFmpeg = async () => {
     if (ffmpegLoaded || !ffmpegScriptReady) return;
@@ -63,34 +113,49 @@ export default function EmojiWiggler() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
 
-    const file = e.dataTransfer.files[0];
-    if (file && file.type === "image/png") {
-      setOriginalFilename(file.name);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImage(event.target?.result as string);
-        setGifUrl(null);
-        setGifSize(null);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
+      const file = e.dataTransfer.files[0];
+      if (file && (file.type === "image/png" || isHeifFile(file))) {
+        setOriginalFilename(file.name);
+        try {
+          const dataURL = await convertFileToDataURL(file);
+          setImage(dataURL);
+          setGifUrl(null);
+          setGifSize(null);
+        } catch (error) {
+          console.error("Error processing file:", error);
+          alert(
+            error instanceof Error
+              ? error.message
+              : "Failed to process the image file."
+          );
+        }
+      }
+    },
+    [convertFileToDataURL, isHeifFile]
+  );
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type === "image/png") {
+    if (file && (file.type === "image/png" || isHeifFile(file))) {
       setOriginalFilename(file.name);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImage(event.target?.result as string);
+      try {
+        const dataURL = await convertFileToDataURL(file);
+        setImage(dataURL);
         setGifUrl(null);
         setGifSize(null);
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Error processing file:", error);
+        alert(
+          error instanceof Error
+            ? error.message
+            : "Failed to process the image file."
+        );
+      }
     }
   };
 
@@ -124,6 +189,7 @@ export default function EmojiWiggler() {
       // High framerate for smooth animation
       const frameCount = 60;
       const frameDuration = 33; // ms per frame (30 FPS)
+      const speed = 2;
 
       for (let i = 0; i < frameCount; i++) {
         const progress = i / frameCount;
@@ -131,13 +197,13 @@ export default function EmojiWiggler() {
         // Create crazy wobble with multiple sine waves at different frequencies
         const time = progress * Math.PI * 2;
         const offsetX =
-          Math.sin(time * 3) * 8 +
-          Math.sin(time * 7) * 4 +
-          Math.cos(time * 5) * 6;
+          Math.sin(time * 3 * speed) * 8 +
+          Math.sin(time * 7 * speed) * 4 +
+          Math.cos(time * 5 * speed) * 6;
         const offsetY =
-          Math.cos(time * 4) * 6 +
-          Math.sin(time * 8) * 3 +
-          Math.cos(time * 6) * 5;
+          Math.cos(time * 4 * speed) * 8 +
+          Math.sin(time * 8 * speed) * 3 +
+          Math.cos(time * 6 * speed) * 5;
 
         // Clear with transparent background
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -230,7 +296,7 @@ export default function EmojiWiggler() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
               <Sparkles className="w-8 h-8 text-white" />
-              <h1 className="text-5xl font-bold text-white">Emoji Wiggler</h1>
+              <h1 className="text-5xl font-bold text-white">Emoji Wigglerrr</h1>
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <p className="text-lg text-gray-400">Make it wiggle</p>
@@ -261,7 +327,7 @@ export default function EmojiWiggler() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png"
+                  accept="image/png,image/heic,image/heif"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -284,10 +350,10 @@ export default function EmojiWiggler() {
                     <Upload className="w-16 h-16 mx-auto text-gray-600" />
                     <div>
                       <p className="text-lg font-medium text-white">
-                        Drop your PNG here
+                        Drop your image here
                       </p>
                       <p className="text-sm text-gray-400">
-                        or click to browse
+                        or click to browse (PNG, HEIC, HEIF)
                       </p>
                     </div>
                   </div>
