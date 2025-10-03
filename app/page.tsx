@@ -15,10 +15,17 @@ export default function EmojiWiggler() {
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [originalFilename, setOriginalFilename] = useState<string | null>(null);
+  const [gifSize, setGifSize] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
   const [ffmpegScriptReady, setFfmpegScriptReady] = useState(false);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const loadFFmpeg = async () => {
     if (ffmpegLoaded || !ffmpegScriptReady) return;
@@ -67,6 +74,7 @@ export default function EmojiWiggler() {
       reader.onload = (event) => {
         setImage(event.target?.result as string);
         setGifUrl(null);
+        setGifSize(null);
       };
       reader.readAsDataURL(file);
     }
@@ -80,6 +88,7 @@ export default function EmojiWiggler() {
       reader.onload = (event) => {
         setImage(event.target?.result as string);
         setGifUrl(null);
+        setGifSize(null);
       };
       reader.readAsDataURL(file);
     }
@@ -106,11 +115,15 @@ export default function EmojiWiggler() {
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not get canvas context");
 
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // Limit canvas size to reduce file size
+      const maxSize = 120;
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = Math.floor(img.width * scale);
+      canvas.height = Math.floor(img.height * scale);
 
-      const frameCount = 60;
-      const frameDuration = 33; // ms per frame (~30 FPS)
+      // Optimize for file size: fewer frames, lower FPS
+      const frameCount = 12;
+      const frameDuration = 150; // ms per frame (~6.7 FPS)
 
       for (let i = 0; i < frameCount; i++) {
         const progress = i / frameCount;
@@ -131,7 +144,7 @@ export default function EmojiWiggler() {
         ctx.save();
         // Shrink by 80% and center, then add crazy wobble
         ctx.translate(canvas.width / 2 + offsetX, canvas.height / 2 + offsetY);
-        ctx.scale(0.8, 0.8);
+        ctx.scale(0.8 * scale, 0.8 * scale);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
         ctx.restore();
 
@@ -155,9 +168,11 @@ export default function EmojiWiggler() {
         "-i",
         "frame%03d.png",
         "-vf",
-        "split[s0][s1];[s0]palettegen=max_colors=256[p];[s1][p]paletteuse=dither=bayer",
+        "split[s0][s1];[s0]palettegen=max_colors=64:reserve_transparent=0[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2",
         "-loop",
         "0",
+        "-fs",
+        "128k",
         "output.gif",
       ]);
 
@@ -165,6 +180,9 @@ export default function EmojiWiggler() {
       const arrayData = new Uint8Array(data as Uint8Array);
       const gifBlob = new Blob([arrayData], { type: "image/gif" });
       const gifUrl = URL.createObjectURL(gifBlob);
+      
+      // Store file size for display
+      setGifSize(gifBlob.size);
       setGifUrl(gifUrl);
 
       for (let i = 0; i < frameCount; i++) {
@@ -307,9 +325,19 @@ export default function EmojiWiggler() {
                       height={200}
                       className="max-w-[200px] max-h-[200px] mx-auto"
                     />
-                    <p className="text-sm text-gray-400">
-                      Your wiggling emoji is ready
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-400">
+                        Your wiggling emoji is ready
+                      </p>
+                      {gifSize && (
+                        <p className="text-xs text-gray-500">
+                          File size: {formatFileSize(gifSize)}
+                          {gifSize <= 128 * 1024 && (
+                            <span className="text-green-400 ml-2">✓ Under 128KB</span>
+                          )}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
