@@ -1,126 +1,137 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useRef, useCallback } from "react"
-import { Upload, Download, Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import Script from "next/script"
-import { FFmpeg } from "@ffmpeg/ffmpeg"
-import { fetchFile, toBlobURL } from "@ffmpeg/util"
+import { useCallback, useState, useRef } from "react";
+import Image from "next/image";
+import Script from "next/script";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { Upload, Download, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default function EmojiWiggler() {
-  const [image, setImage] = useState<string | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [gifUrl, setGifUrl] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const ffmpegRef = useRef<FFmpeg | null>(null)
-  const [ffmpegLoaded, setFfmpegLoaded] = useState(false)
-  const [ffmpegScriptReady, setFfmpegScriptReady] = useState(false)
+  const [image, setImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+  const [ffmpegScriptReady, setFfmpegScriptReady] = useState(false);
 
   const loadFFmpeg = async () => {
-    if (ffmpegLoaded || !ffmpegScriptReady) return
+    if (ffmpegLoaded || !ffmpegScriptReady) return;
 
-    const ffmpeg = new FFmpeg()
-    ffmpegRef.current = ffmpeg
+    const baseURL =
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core/dist/umd";
 
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd"
+    if (!ffmpegRef.current) {
+      ffmpegRef.current = new FFmpeg();
+    }
+    
+    const ffmpeg = ffmpegRef.current;
+
+    ffmpeg.on("log", ({ message }) => {
+      console.log(message);
+    });
+
     await ffmpeg.load({
-      coreURL: `${baseURL}/ffmpeg-core.js`,
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-    })
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+      wasmURL: await toBlobURL(
+        `${baseURL}/ffmpeg-core.wasm`,
+        "application/wasm"
+      ),
+    });
 
-    setFfmpegLoaded(true)
-  }
+    setFfmpegLoaded(true);
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
+    e.preventDefault();
+    setIsDragging(false);
 
-    const file = e.dataTransfer.files[0]
+    const file = e.dataTransfer.files[0];
     if (file && file.type === "image/png") {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (event) => {
-        setImage(event.target?.result as string)
-        setGifUrl(null)
-      }
-      reader.readAsDataURL(file)
+        setImage(event.target?.result as string);
+        setGifUrl(null);
+      };
+      reader.readAsDataURL(file);
     }
-  }, [])
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file && file.type === "image/png") {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (event) => {
-        setImage(event.target?.result as string)
-        setGifUrl(null)
-      }
-      reader.readAsDataURL(file)
+        setImage(event.target?.result as string);
+        setGifUrl(null);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleGenerateGif = async () => {
-    if (!image) return
+    if (!image) return;
 
-    setIsGenerating(true)
+    setIsGenerating(true);
 
     try {
-      await loadFFmpeg()
+      await loadFFmpeg();
 
-      const ffmpeg = ffmpegRef.current
-      if (!ffmpeg) throw new Error("FFmpeg not initialized")
+      const ffmpeg = ffmpegRef.current;
+      if (!ffmpeg) throw new Error("FFmpeg not initialized");
 
-      const img = new Image()
-      img.src = image
+      const img = new window.Image();
+      img.src = image;
       await new Promise((resolve) => {
-        img.onload = resolve
-      })
+        img.onload = resolve;
+      });
 
-      const canvas = document.createElement("canvas")
-      const ctx = canvas.getContext("2d")
-      if (!ctx) throw new Error("Could not get canvas context")
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not get canvas context");
 
-      canvas.width = img.width
-      canvas.height = img.height
+      canvas.width = img.width;
+      canvas.height = img.height;
 
-      const frameCount = 20
-      const frameDuration = 50 // ms per frame
+      const frameCount = 20;
+      const frameDuration = 50; // ms per frame
 
       for (let i = 0; i < frameCount; i++) {
-        const progress = i / frameCount
-        const angle = Math.sin(progress * Math.PI * 4) * 0.2 // Rotation wiggle
-        const scale = 1 + Math.sin(progress * Math.PI * 4) * 0.1 // Scale wiggle
-        const offsetX = Math.sin(progress * Math.PI * 4) * 5 // Horizontal wiggle
-        const offsetY = Math.cos(progress * Math.PI * 4) * 3 // Vertical wiggle
+        const progress = i / frameCount;
+        const offsetX = Math.sin(progress * Math.PI * 4) * 10; // Left/right wiggle
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.save()
-        ctx.translate(canvas.width / 2 + offsetX, canvas.height / 2 + offsetY)
-        ctx.rotate(angle)
-        ctx.scale(scale, scale)
-        ctx.drawImage(img, -img.width / 2, -img.height / 2)
-        ctx.restore()
+        ctx.save();
+        // Shrink by 80% and center, then add horizontal wiggle
+        ctx.translate(canvas.width / 2 + offsetX, canvas.height / 2);
+        ctx.scale(0.8, 0.8);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        ctx.restore();
 
         const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(b!), "image/png")
-        })
+          canvas.toBlob((b) => resolve(b!), "image/png");
+        });
 
-        const frameData = await fetchFile(blob)
-        await ffmpeg.writeFile(`frame${i.toString().padStart(3, "0")}.png`, frameData)
+        const frameData = await fetchFile(blob);
+        await ffmpeg.writeFile(
+          `frame${i.toString().padStart(3, "0")}.png`,
+          frameData
+        );
       }
 
       await ffmpeg.exec([
@@ -133,38 +144,39 @@ export default function EmojiWiggler() {
         "-loop",
         "0",
         "output.gif",
-      ])
+      ]);
 
-      const data = await ffmpeg.readFile("output.gif")
-      const gifBlob = new Blob([data], { type: "image/gif" })
-      const gifUrl = URL.createObjectURL(gifBlob)
-      setGifUrl(gifUrl)
+      const data = await ffmpeg.readFile("output.gif");
+      const arrayData = new Uint8Array(data as Uint8Array);
+      const gifBlob = new Blob([arrayData], { type: "image/gif" });
+      const gifUrl = URL.createObjectURL(gifBlob);
+      setGifUrl(gifUrl);
 
       for (let i = 0; i < frameCount; i++) {
-        await ffmpeg.deleteFile(`frame${i.toString().padStart(3, "0")}.png`)
+        await ffmpeg.deleteFile(`frame${i.toString().padStart(3, "0")}.png`);
       }
-      await ffmpeg.deleteFile("output.gif")
+      await ffmpeg.deleteFile("output.gif");
     } catch (error) {
-      console.error("Error generating GIF:", error)
-      alert("Failed to generate GIF. Please try again.")
+      console.error("Error generating GIF:", error);
+      alert("Failed to generate GIF. Please try again.");
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
-  }
+  };
 
   const downloadGif = () => {
-    if (!gifUrl) return
+    if (!gifUrl) return;
 
-    const a = document.createElement("a")
-    a.href = gifUrl
-    a.download = "wiggling-emoji.gif"
-    a.click()
-  }
+    const a = document.createElement("a");
+    a.href = gifUrl;
+    a.download = "wiggling-emoji.gif";
+    a.click();
+  };
 
   return (
     <>
       <Script
-        src="https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js"
+        src="https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js"
         strategy="lazyOnload"
         onReady={() => setFfmpegScriptReady(true)}
       />
@@ -182,12 +194,16 @@ export default function EmojiWiggler() {
 
           <div className="grid gap-8 md:grid-cols-2">
             <Card className="p-6 bg-black border-gray-800">
-              <h2 className="text-xl font-semibold mb-4 text-white">Upload Emoji</h2>
-              <div
+              <h2 className="text-xl font-semibold mb-4 text-white">
+                Upload Emoji
+              </h2>
+              <button
+                type="button"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
+                aria-label="Upload image file"
                 className={`
                   border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                   transition-all duration-200 min-h-[300px] flex flex-col items-center justify-center
@@ -208,23 +224,31 @@ export default function EmojiWiggler() {
 
                 {image ? (
                   <div className="space-y-4">
-                    <img
+                    <Image
                       src={image || "/placeholder.svg"}
                       alt="Uploaded emoji"
+                      width={200}
+                      height={200}
                       className="max-w-[200px] max-h-[200px] mx-auto"
                     />
-                    <p className="text-sm text-gray-400">Click to change image</p>
+                    <p className="text-sm text-gray-400">
+                      Click to change image
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <Upload className="w-16 h-16 mx-auto text-gray-600" />
                     <div>
-                      <p className="text-lg font-medium text-white">Drop your PNG here</p>
-                      <p className="text-sm text-gray-400">or click to browse</p>
+                      <p className="text-lg font-medium text-white">
+                        Drop your PNG here
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        or click to browse
+                      </p>
                     </div>
                   </div>
                 )}
-              </div>
+              </button>
 
               <Button
                 onClick={handleGenerateGif}
@@ -247,23 +271,31 @@ export default function EmojiWiggler() {
             </Card>
 
             <Card className="p-6 bg-black border-gray-800">
-              <h2 className="text-xl font-semibold mb-4 text-white">Wiggling Result</h2>
+              <h2 className="text-xl font-semibold mb-4 text-white">
+                Wiggling Result
+              </h2>
               <div className="border-2 border-gray-800 rounded-lg p-8 text-center min-h-[300px] flex flex-col items-center justify-center bg-gray-950">
                 {gifUrl ? (
                   <div className="space-y-4">
-                    <img
+                    <Image
                       src={gifUrl || "/placeholder.svg"}
                       alt="Wiggling emoji"
+                      width={200}
+                      height={200}
                       className="max-w-[200px] max-h-[200px] mx-auto"
                     />
-                    <p className="text-sm text-gray-400">Your wiggling emoji is ready!</p>
+                    <p className="text-sm text-gray-400">
+                      Your wiggling emoji is ready!
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="w-16 h-16 mx-auto rounded-full bg-gray-900 flex items-center justify-center">
                       <Sparkles className="w-8 h-8 text-gray-600" />
                     </div>
-                    <p className="text-gray-400">Your wiggling GIF will appear here</p>
+                    <p className="text-gray-400">
+                      Your wiggling GIF will appear here
+                    </p>
                   </div>
                 )}
               </div>
@@ -285,13 +317,14 @@ export default function EmojiWiggler() {
             <Card className="p-6 bg-gray-950 border-gray-800">
               <h3 className="font-semibold mb-2 text-white">How it works</h3>
               <p className="text-sm text-gray-400">
-                Upload a PNG emoji, and we'll create a fun wiggling animation with rotation, scaling, and movement
-                effects. Perfect for Slack reactions and social media!
+                Upload a PNG emoji, and we'll create a fun wiggling animation
+                with rotation, scaling, and movement effects. Perfect for Slack
+                reactions and social media!
               </p>
             </Card>
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }
