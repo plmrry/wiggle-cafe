@@ -198,21 +198,16 @@ export default function EmojiWiggler() {
       canvas.width = Math.floor(img.width * scale);
       canvas.height = Math.floor(img.height * scale);
 
-      // High framerate for smooth animation
+      // High framerate for frenetic animation
       const frameCount = 60;
       const frameDuration = 33; // ms per frame (30 FPS)
-      const speed = 2;
 
       // Generate random seeds for unique wiggle patterns each time
       const randomSeed1 = Math.random() * Math.PI * 2;
       const randomSeed2 = Math.random() * Math.PI * 2;
-      const randomSeed3 = Math.random() * Math.PI * 2;
-      const randomFreq1 = 2.5 + Math.random() * 1.5; // Random frequency 2.5-4
-      const randomFreq2 = 6 + Math.random() * 3; // Random frequency 6-9
-      const randomFreq3 = 4 + Math.random() * 3; // Random frequency 4-7
 
       // Calculate the scaled image dimensions and maximum safe wiggle offset
-      const imageScale = 0.8;
+      const imageScale = 0.9;
       const scaledWidth = img.width * scale * imageScale;
       const scaledHeight = img.height * scale * imageScale;
 
@@ -221,20 +216,13 @@ export default function EmojiWiggler() {
       const maxOffsetY = (canvas.height - scaledHeight) / 2;
 
       for (let i = 0; i < frameCount; i++) {
-        const progress = i / frameCount;
+        // Create frantic jumps with random offsets that change every frame
+        // Use deterministic random based on frame number so it's reproducible
+        const seedX = Math.sin(i * 12.9898 + randomSeed1) * 43758.5453;
+        const seedY = Math.sin(i * 78.233 + randomSeed2) * 43758.5453;
 
-        // Create crazy wobble with multiple sine waves at different frequencies and random variations
-        const time = progress * Math.PI * 2;
-        const rawOffsetX =
-          (Math.sin(time * randomFreq1 * speed + randomSeed1) * 8 +
-            Math.sin(time * 7 * speed + randomSeed2) * 4 +
-            Math.cos(time * 5 * speed + randomSeed3) * 6) *
-          wiggleIntensity;
-        const rawOffsetY =
-          (Math.cos(time * 4 * speed + randomSeed1) * 8 +
-            Math.sin(time * randomFreq2 * speed + randomSeed2) * 3 +
-            Math.cos(time * randomFreq3 * speed + randomSeed3) * 5) *
-          wiggleIntensity;
+        const rawOffsetX = ((seedX - Math.floor(seedX)) * 2 - 1) * maxOffsetX * wiggleIntensity;
+        const rawOffsetY = ((seedY - Math.floor(seedY)) * 2 - 1) * maxOffsetY * wiggleIntensity;
 
         // Clamp offsets to ensure image never escapes canvas boundaries
         const offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, rawOffsetX));
