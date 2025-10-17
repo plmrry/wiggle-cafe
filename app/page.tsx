@@ -174,19 +174,24 @@ export default function EmojiWiggler() {
   const handleGenerateGif = async () => {
     if (!image) return;
 
+    console.debug("🎬 Starting GIF generation...");
     setIsGenerating(true);
 
     try {
+      console.debug("📦 Loading FFmpeg...");
       await loadFFmpeg();
+      console.debug("✅ FFmpeg loaded");
 
       const ffmpeg = ffmpegRef.current;
       if (!ffmpeg) throw new Error("FFmpeg not initialized");
 
+      console.debug("🖼️ Loading source image...");
       const img = new window.Image();
       img.src = image;
       await new Promise((resolve) => {
         img.onload = resolve;
       });
+      console.debug(`✅ Image loaded: ${img.width}x${img.height}`);
 
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d", { alpha: true });
@@ -197,6 +202,7 @@ export default function EmojiWiggler() {
       const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
       canvas.width = Math.floor(img.width * scale);
       canvas.height = Math.floor(img.height * scale);
+      console.debug(`📐 Canvas size: ${canvas.width}x${canvas.height} (scale: ${scale.toFixed(2)})`);
 
       // High framerate for frenetic animation
       const frameCount = 60;
@@ -205,6 +211,7 @@ export default function EmojiWiggler() {
       // Generate random seeds for unique wiggle patterns each time
       const randomSeed1 = Math.random() * Math.PI * 2;
       const randomSeed2 = Math.random() * Math.PI * 2;
+      console.debug(`🎲 Random seeds: ${randomSeed1.toFixed(2)}, ${randomSeed2.toFixed(2)}`);
 
       // Calculate the scaled image dimensions and maximum safe wiggle offset
       const imageScale = 0.9;
@@ -214,7 +221,9 @@ export default function EmojiWiggler() {
       // Maximum offset before image escapes canvas (half the difference between canvas and scaled image)
       const maxOffsetX = (canvas.width - scaledWidth) / 2;
       const maxOffsetY = (canvas.height - scaledHeight) / 2;
+      console.debug(`🎯 Wiggle intensity: ${wiggleIntensity}x, Max offset: ${maxOffsetX.toFixed(1)}x${maxOffsetY.toFixed(1)}`);
 
+      console.debug(`🎞️ Generating ${frameCount} frames...`);
       for (let i = 0; i < frameCount; i++) {
         // Create frantic jumps with random offsets that change every frame
         // Use deterministic random based on frame number so it's reproducible
@@ -251,8 +260,10 @@ export default function EmojiWiggler() {
           frameData
         );
       }
+      console.debug("✅ All frames generated and written to FFmpeg");
 
       // Generate GIF with transparency support
+      console.debug("🎨 Running FFmpeg to create GIF...");
       await ffmpeg.exec([
         "-framerate",
         `${1000 / frameDuration}`, // Set input framerate (30 FPS)
@@ -267,24 +278,30 @@ export default function EmojiWiggler() {
         "90k", // File size limit: maximum 90KB
         "output.gif", // Output filename
       ]);
+      console.debug("✅ FFmpeg encoding complete");
 
+      console.debug("📖 Reading output GIF...");
       const data = await ffmpeg.readFile("output.gif");
       const arrayData = new Uint8Array(data as Uint8Array);
       const gifBlob = new Blob([arrayData], { type: "image/gif" });
       const gifUrl = URL.createObjectURL(gifBlob);
+      console.debug(`✅ GIF created: ${(gifBlob.size / 1024).toFixed(1)} KB`);
 
       // Store file size for display
       setGifSize(gifBlob.size);
       setGifUrl(gifUrl);
 
+      console.debug("🧹 Cleaning up temporary files...");
       for (let i = 0; i < frameCount; i++) {
         await ffmpeg.deleteFile(`frame${i.toString().padStart(3, "0")}.png`);
       }
       await ffmpeg.deleteFile("output.gif");
+      console.debug("✅ Cleanup complete");
     } catch (error) {
-      console.error("Error generating GIF:", error);
+      console.error("❌ Error generating GIF:", error);
       alert("Failed to generate GIF. Please try again.");
     } finally {
+      console.debug("🏁 GIF generation process finished");
       setIsGenerating(false);
     }
   };
