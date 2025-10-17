@@ -131,7 +131,7 @@ export default function EmojiWiggler() {
       setIsDragging(false);
 
       const file = e.dataTransfer.files[0];
-      if (file && (file.type === "image/png" || isHeifFile(file))) {
+      if (file && (file.type === "image/png" || file.type === "image/jpeg" || file.type === "image/jpg" || isHeifFile(file))) {
         setOriginalFilename(file.name);
         try {
           const dataURL = await convertFileToDataURL(file);
@@ -153,7 +153,7 @@ export default function EmojiWiggler() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && (file.type === "image/png" || isHeifFile(file))) {
+    if (file && (file.type === "image/png" || file.type === "image/jpeg" || file.type === "image/jpg" || isHeifFile(file))) {
       setOriginalFilename(file.name);
       try {
         const dataURL = await convertFileToDataURL(file);
@@ -350,7 +350,7 @@ export default function EmojiWiggler() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/heic,image/heif"
+                  accept="image/png,image/jpeg,image/jpg,image/heic,image/heif"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -376,7 +376,7 @@ export default function EmojiWiggler() {
                         Drop your image here
                       </p>
                       <p className="text-sm text-gray-400">
-                        or click to browse (PNG, HEIC, HEIF)
+                        or click to browse (PNG, JPEG, HEIC)
                       </p>
                     </div>
                   </div>
