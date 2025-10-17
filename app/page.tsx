@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Script from "next/script";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
@@ -20,10 +20,22 @@ export default function EmojiWiggler() {
   const [isDragging, setIsDragging] = useState(false);
   const [originalFilename, setOriginalFilename] = useState<string | null>(null);
   const [gifSize, setGifSize] = useState<number | null>(null);
+  const [wiggleIntensity, setWiggleIntensity] = useState(1.5);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
   const [ffmpegScriptReady, setFfmpegScriptReady] = useState(false);
+
+  // Debounced effect to regenerate GIF when wiggle intensity changes
+  useEffect(() => {
+    if (!image || !gifUrl) return;
+
+    const timeoutId = setTimeout(() => {
+      handleGenerateGif();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [wiggleIntensity]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -191,19 +203,42 @@ export default function EmojiWiggler() {
       const frameDuration = 33; // ms per frame (30 FPS)
       const speed = 2;
 
+      // Generate random seeds for unique wiggle patterns each time
+      const randomSeed1 = Math.random() * Math.PI * 2;
+      const randomSeed2 = Math.random() * Math.PI * 2;
+      const randomSeed3 = Math.random() * Math.PI * 2;
+      const randomFreq1 = 2.5 + Math.random() * 1.5; // Random frequency 2.5-4
+      const randomFreq2 = 6 + Math.random() * 3; // Random frequency 6-9
+      const randomFreq3 = 4 + Math.random() * 3; // Random frequency 4-7
+
+      // Calculate the scaled image dimensions and maximum safe wiggle offset
+      const imageScale = 0.8;
+      const scaledWidth = img.width * scale * imageScale;
+      const scaledHeight = img.height * scale * imageScale;
+
+      // Maximum offset before image escapes canvas (half the difference between canvas and scaled image)
+      const maxOffsetX = (canvas.width - scaledWidth) / 2;
+      const maxOffsetY = (canvas.height - scaledHeight) / 2;
+
       for (let i = 0; i < frameCount; i++) {
         const progress = i / frameCount;
 
-        // Create crazy wobble with multiple sine waves at different frequencies
+        // Create crazy wobble with multiple sine waves at different frequencies and random variations
         const time = progress * Math.PI * 2;
-        const offsetX =
-          Math.sin(time * 3 * speed) * 8 +
-          Math.sin(time * 7 * speed) * 4 +
-          Math.cos(time * 5 * speed) * 6;
-        const offsetY =
-          Math.cos(time * 4 * speed) * 8 +
-          Math.sin(time * 8 * speed) * 3 +
-          Math.cos(time * 6 * speed) * 5;
+        const rawOffsetX =
+          (Math.sin(time * randomFreq1 * speed + randomSeed1) * 8 +
+            Math.sin(time * 7 * speed + randomSeed2) * 4 +
+            Math.cos(time * 5 * speed + randomSeed3) * 6) *
+          wiggleIntensity;
+        const rawOffsetY =
+          (Math.cos(time * 4 * speed + randomSeed1) * 8 +
+            Math.sin(time * randomFreq2 * speed + randomSeed2) * 3 +
+            Math.cos(time * randomFreq3 * speed + randomSeed3) * 5) *
+          wiggleIntensity;
+
+        // Clamp offsets to ensure image never escapes canvas boundaries
+        const offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, rawOffsetX));
+        const offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, rawOffsetY));
 
         // Clear with transparent background
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -211,7 +246,7 @@ export default function EmojiWiggler() {
         ctx.save();
         // Shrink by 80% and center, then add crazy wobble
         ctx.translate(canvas.width / 2 + offsetX, canvas.height / 2 + offsetY);
-        ctx.scale(0.8 * scale, 0.8 * scale);
+        ctx.scale(imageScale * scale, imageScale * scale);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
         ctx.restore();
 
@@ -420,6 +455,25 @@ export default function EmojiWiggler() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="wiggle-intensity" className="text-sm font-medium text-white">
+                    Wiggle Intensity
+                  </label>
+                  <span className="text-sm text-gray-400">{wiggleIntensity.toFixed(1)}x</span>
+                </div>
+                <input
+                  id="wiggle-intensity"
+                  type="range"
+                  min="0.5"
+                  max="5"
+                  step="0.1"
+                  value={wiggleIntensity}
+                  onChange={(e) => setWiggleIntensity(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-white"
+                />
               </div>
 
               <Button
