@@ -1,8 +1,8 @@
-# Wiggle Café
+# [Wiggle Café](https://wiggle.cafe)
 
-https://wiggle.cafe
 
-Make a PNG file into a wiggling GIF: `:lfg-intense:`
+
+Make it wiggle.
 
 ## Before
 
