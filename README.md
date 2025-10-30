@@ -1,4 +1,4 @@
-# Wiggle Emoji Generator
+# Wiggle Café
 
 https://wiggle.cafe
 
