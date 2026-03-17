@@ -1,26 +1,27 @@
-import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Wiggle Café",
-  description: "Make your emoji wiggle — Transform static PNG files into wiggling GIFs",
-  generator: "v0.app",
+	title: "Wiggle Café",
+	description:
+		"Make your emoji wiggle — Transform static PNG files into wiggling GIFs",
+	generator: "v0.app",
 };
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en">
+			<body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+				{children}
+				<Analytics />
+			</body>
+		</html>
+	);
 }
