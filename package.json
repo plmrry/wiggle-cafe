@@ -3,13 +3,18 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"biome": "biome check --fix --unsafe",
+		"biome": "biome check --fix --unsafe .",
+		"copy:ffmpeg-core": "node ./scripts/copy-ffmpeg-core.mjs",
 		"build": "next build",
 		"dev": "next dev",
 		"lint": "next lint",
+		"postinstall": "pnpm copy:ffmpeg-core",
+		"prebuild": "pnpm copy:ffmpeg-core",
+		"predev": "pnpm copy:ffmpeg-core",
 		"start": "next start"
 	},
 	"dependencies": {
+		"@ffmpeg/core": "0.12.10",
 		"@ffmpeg/ffmpeg": "latest",
 		"@ffmpeg/util": "latest",
 		"@hookform/resolvers": "^3.10.0",

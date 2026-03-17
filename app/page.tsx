@@ -1,10 +1,9 @@
 "use client";
 
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { fetchFile } from "@ffmpeg/util";
 import { Download, Sparkles, Upload } from "lucide-react";
 import Image from "next/image";
-import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,7 +23,6 @@ export default function EmojiWiggler() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const ffmpegRef = useRef<FFmpeg | null>(null);
 	const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
-	const [ffmpegScriptReady, setFfmpegScriptReady] = useState(false);
 
 	const formatFileSize = (bytes: number): string => {
 		if (bytes < 1024) return `${bytes} B`;
@@ -79,26 +77,29 @@ export default function EmojiWiggler() {
 	);
 
 	const loadFFmpeg = async () => {
-		if (ffmpegLoaded || !ffmpegScriptReady) return;
-
-		const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core/dist/umd";
+		if (ffmpegLoaded) return;
 
 		if (!ffmpegRef.current) {
 			ffmpegRef.current = new FFmpeg();
 		}
 
 		const ffmpeg = ffmpegRef.current;
+		const coreURL = new URL(
+			"/ffmpeg/ffmpeg-core.js",
+			window.location.origin,
+		).toString();
+		const wasmURL = new URL(
+			"/ffmpeg/ffmpeg-core.wasm",
+			window.location.origin,
+		).toString();
 
 		ffmpeg.on("log", ({ message }) => {
 			console.log(message);
 		});
 
 		await ffmpeg.load({
-			coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-			wasmURL: await toBlobURL(
-				`${baseURL}/ffmpeg-core.wasm`,
-				"application/wasm",
-			),
+			coreURL,
+			wasmURL,
 		});
 
 		setFfmpegLoaded(true);
@@ -345,184 +346,169 @@ export default function EmojiWiggler() {
 	}, [wiggleIntensity]);
 
 	return (
-		<>
-			<Script
-				src="https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js"
-				strategy="lazyOnload"
-				onReady={() => setFfmpegScriptReady(true)}
-			/>
-
-			<div className="min-h-screen bg-black">
-				<div className="container mx-auto px-4 py-12 max-w-4xl">
-					<div className="text-center mb-12">
-						<div className="inline-flex items-center gap-2 mb-4">
-							<Sparkles className="w-8 h-8 text-white" />
-							<h1 className="text-5xl font-bold text-white">Emoji Wiggler</h1>
-							<Sparkles className="w-8 h-8 text-white" />
-						</div>
-						<p className="text-lg text-gray-400">Make it wiggle</p>
+		<div className="min-h-screen bg-black">
+			<div className="container mx-auto max-w-4xl px-4 py-12">
+				<div className="mb-12 text-center">
+					<div className="mb-4 inline-flex items-center gap-2">
+						<Sparkles className="h-8 w-8 text-white" />
+						<h1 className="font-bold text-5xl text-white">Emoji Wiggler</h1>
+						<Sparkles className="h-8 w-8 text-white" />
 					</div>
+					<p className="text-gray-400 text-lg">Make it wiggle</p>
+				</div>
 
-					<div className="grid gap-8 md:grid-cols-2">
-						<Card className="p-6 bg-black border-gray-800">
-							<h2 className="text-xl font-semibold mb-4 text-white">
-								Upload Emoji
-							</h2>
-							<button
-								type="button"
-								onDragOver={handleDragOver}
-								onDragLeave={handleDragLeave}
-								onDrop={handleDrop}
-								onClick={() => fileInputRef.current?.click()}
-								aria-label="Upload image file"
-								className={`
-                  border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                  transition-all duration-200 min-h-[300px] flex flex-col items-center justify-center
-                  ${
-										isDragging
-											? "border-white bg-gray-900 scale-105"
-											: "border-gray-800 hover:border-gray-600 hover:bg-gray-950"
-									}
+				<div className="grid gap-8 md:grid-cols-2">
+					<Card className="border-gray-800 bg-black p-6">
+						<h2 className="mb-4 font-semibold text-white text-xl">
+							Upload Emoji
+						</h2>
+						<button
+							type="button"
+							onDragOver={handleDragOver}
+							onDragLeave={handleDragLeave}
+							onDrop={handleDrop}
+							onClick={() => fileInputRef.current?.click()}
+							aria-label="Upload image file"
+							className={`flex min-h-75 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-all duration-200 ${
+								isDragging
+									? "scale-105 border-white bg-gray-900"
+									: "border-gray-800 hover:border-gray-600 hover:bg-gray-950"
+							}
                 `}
-							>
-								<input
-									ref={fileInputRef}
-									type="file"
-									accept="image/png,image/jpeg,image/jpg,image/heic,image/heif"
-									onChange={handleFileSelect}
-									className="hidden"
-								/>
+						>
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept="image/png,image/jpeg,image/jpg,image/heic,image/heif"
+								onChange={handleFileSelect}
+								className="hidden"
+							/>
 
-								{image ? (
-									<div className="space-y-4">
-										<Image
-											src={image || "/placeholder.svg"}
-											alt="Uploaded emoji"
-											width={200}
-											height={200}
-											className="max-w-[200px] max-h-[200px] mx-auto"
-										/>
-										<p className="text-sm text-gray-400">
-											Click to change image
-										</p>
-									</div>
-								) : (
-									<div className="space-y-4">
-										<Upload className="w-16 h-16 mx-auto text-gray-600" />
-										<div>
-											<p className="text-lg font-medium text-white">
-												Drop your image here
-											</p>
-											<p className="text-sm text-gray-400">
-												or click to browse (PNG, JPEG, HEIC)
-											</p>
-										</div>
-									</div>
-								)}
-							</button>
-
-							<Button
-								onClick={handleGenerateGif}
-								disabled={!image || isGenerating}
-								className="w-full mt-4 bg-white hover:bg-gray-200 text-black disabled:bg-gray-800 disabled:text-gray-600"
-								size="lg"
-							>
-								{isGenerating ? (
-									<>
-										<div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2" />
-										Generating Wiggle...
-									</>
-								) : (
-									<>
-										<Sparkles className="w-4 h-4 mr-2" />
-										Make it Wiggle
-									</>
-								)}
-							</Button>
-						</Card>
-
-						<Card className="p-6 bg-black border-gray-800">
-							<h2 className="text-xl font-semibold mb-4 text-white">
-								Wiggling Result
-							</h2>
-							<div className="border-2 border-gray-800 rounded-lg p-8 text-center min-h-[300px] flex flex-col items-center justify-center bg-gray-950">
-								{gifUrl ? (
-									<div className="space-y-4">
-										<Image
-											src={gifUrl || "/placeholder.svg"}
-											alt="Wiggling emoji"
-											width={200}
-											height={200}
-											className="max-w-[200px] max-h-[200px] mx-auto"
-										/>
-										<div className="space-y-1">
-											<p className="text-sm text-gray-400">
-												Your wiggling emoji is ready
-											</p>
-											{gifSize && (
-												<p className="text-xs text-gray-500">
-													File size: {formatFileSize(gifSize)}
-													{gifSize <= 110 * 1024 && (
-														<span className="text-green-400 ml-2">
-															✓ Under 110KB
-														</span>
-													)}
-												</p>
-											)}
-										</div>
-									</div>
-								) : (
-									<div className="space-y-4">
-										<div className="w-16 h-16 mx-auto rounded-full bg-gray-900 flex items-center justify-center">
-											<Sparkles className="w-8 h-8 text-gray-600" />
-										</div>
-										<p className="text-gray-400">
-											Your wiggling GIF will appear here
-										</p>
-									</div>
-								)}
-							</div>
-
-							<div className="mt-6 space-y-3">
-								<div className="flex items-center justify-between">
-									<label
-										htmlFor="wiggle-intensity"
-										className="text-sm font-medium text-white"
-									>
-										Wiggle Intensity
-									</label>
-									<span className="text-sm text-gray-400">
-										{wiggleIntensity.toFixed(1)}x
-									</span>
+							{image ? (
+								<div className="space-y-4">
+									<Image
+										src={image || "/placeholder.svg"}
+										alt="Uploaded emoji"
+										width={200}
+										height={200}
+										className="mx-auto max-h-50 max-w-50"
+									/>
+									<p className="text-gray-400 text-sm">Click to change image</p>
 								</div>
-								<input
-									id="wiggle-intensity"
-									type="range"
-									min="0.5"
-									max="10"
-									step="0.1"
-									value={wiggleIntensity}
-									onChange={(e) =>
-										setWiggleIntensity(parseFloat(e.target.value))
-									}
-									className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-white"
-								/>
-							</div>
+							) : (
+								<div className="space-y-4">
+									<Upload className="mx-auto h-16 w-16 text-gray-600" />
+									<div>
+										<p className="font-medium text-lg text-white">
+											Drop your image here
+										</p>
+										<p className="text-gray-400 text-sm">
+											or click to browse (PNG, JPEG, HEIC)
+										</p>
+									</div>
+								</div>
+							)}
+						</button>
 
-							<Button
-								onClick={downloadGif}
-								disabled={!gifUrl}
-								variant="outline"
-								className="w-full mt-4 bg-transparent border-gray-800 text-white hover:bg-gray-950 hover:border-gray-600 disabled:border-gray-900 disabled:text-gray-600"
-								size="lg"
-							>
-								<Download className="w-4 h-4 mr-2" />
-								Download GIF
-							</Button>
-						</Card>
-					</div>
+						<Button
+							onClick={handleGenerateGif}
+							disabled={!image || isGenerating}
+							className="mt-4 w-full bg-white text-black hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-600"
+							size="lg"
+						>
+							{isGenerating ? (
+								<>
+									<div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+									Generating Wiggle...
+								</>
+							) : (
+								<>
+									<Sparkles className="mr-2 h-4 w-4" />
+									Make it Wiggle
+								</>
+							)}
+						</Button>
+					</Card>
+
+					<Card className="border-gray-800 bg-black p-6">
+						<h2 className="mb-4 font-semibold text-white text-xl">
+							Wiggling Result
+						</h2>
+						<div className="flex min-h-75 flex-col items-center justify-center rounded-lg border-2 border-gray-800 bg-gray-950 p-8 text-center">
+							{gifUrl ? (
+								<div className="space-y-4">
+									<Image
+										src={gifUrl || "/placeholder.svg"}
+										alt="Wiggling emoji"
+										width={200}
+										height={200}
+										className="mx-auto max-h-50 max-w-50"
+									/>
+									<div className="space-y-1">
+										<p className="text-gray-400 text-sm">
+											Your wiggling emoji is ready
+										</p>
+										{gifSize && (
+											<p className="text-gray-500 text-xs">
+												File size: {formatFileSize(gifSize)}
+												{gifSize <= 110 * 1024 && (
+													<span className="ml-2 text-green-400">
+														✓ Under 110KB
+													</span>
+												)}
+											</p>
+										)}
+									</div>
+								</div>
+							) : (
+								<div className="space-y-4">
+									<div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-900">
+										<Sparkles className="h-8 w-8 text-gray-600" />
+									</div>
+									<p className="text-gray-400">
+										Your wiggling GIF will appear here
+									</p>
+								</div>
+							)}
+						</div>
+
+						<div className="mt-6 space-y-3">
+							<div className="flex items-center justify-between">
+								<label
+									htmlFor="wiggle-intensity"
+									className="font-medium text-sm text-white"
+								>
+									Wiggle Intensity
+								</label>
+								<span className="text-gray-400 text-sm">
+									{wiggleIntensity.toFixed(1)}x
+								</span>
+							</div>
+							<input
+								id="wiggle-intensity"
+								type="range"
+								min="0.5"
+								max="10"
+								step="0.1"
+								value={wiggleIntensity}
+								onChange={(e) => setWiggleIntensity(parseFloat(e.target.value))}
+								className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-800 accent-white"
+							/>
+						</div>
+
+						<Button
+							onClick={downloadGif}
+							disabled={!gifUrl}
+							variant="outline"
+							className="mt-4 w-full border-gray-800 bg-transparent text-white hover:border-gray-600 hover:bg-gray-950 disabled:border-gray-900 disabled:text-gray-600"
+							size="lg"
+						>
+							<Download className="mr-2 h-4 w-4" />
+							Download GIF
+						</Button>
+					</Card>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }
