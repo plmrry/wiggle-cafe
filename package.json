@@ -11,7 +11,8 @@
 		"postinstall": "pnpm copy:ffmpeg-core",
 		"prebuild": "pnpm copy:ffmpeg-core",
 		"predev": "pnpm copy:ffmpeg-core",
-		"start": "next start"
+		"start": "next start",
+		"type-check": "next typegen && tsgo --noEmit"
 	},
 	"dependencies": {
 		"@ffmpeg/core": "latest",
@@ -76,10 +77,10 @@
 		"@types/node": "latest",
 		"@types/react": "19.2.14",
 		"@types/react-dom": "19.2.3",
+		"@typescript/native-preview": "latest",
 		"postcss": "latest",
 		"tailwindcss": "latest",
-		"tw-animate-css": "latest",
-		"typescript": "latest"
+		"tw-animate-css": "latest"
 	},
 	"packageManager": "pnpm@10.29.2",
 	"engines": {
