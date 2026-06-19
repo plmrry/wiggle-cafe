@@ -8,8 +8,9 @@ import { Download, Sparkles, Upload } from "lucide-react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Title } from "#/app/_components/title";
+import { Button } from "#/components/ui/button";
+import { Card } from "#/components/ui/card";
 
 function œ(...args: unknown[]) {
 	console.log(...args);
@@ -329,14 +330,7 @@ export default function EmojiWiggler() {
 	return (
 		<div className="min-h-screen bg-black">
 			<div className="container mx-auto max-w-4xl px-4 py-12">
-				<div className="mb-12 text-center">
-					<div className="mb-4 inline-flex items-center gap-2">
-						<Sparkles className="h-8 w-8 text-white" />
-						<h1 className="text-5xl font-bold text-white">Wiggle Café</h1>
-						<Sparkles className="h-8 w-8 text-white" />
-					</div>
-					<p className="text-lg text-gray-400">Make it wiggle</p>
-				</div>
+				<Title />
 
 				<div className="grid gap-8 md:grid-cols-2">
 					<Card className="border-gray-800 bg-black p-6">
@@ -419,9 +413,7 @@ export default function EmojiWiggler() {
 									<div className="space-y-1">
 										<p className="text-sm text-gray-400">Your wiggling emoji is ready</p>
 										{gifSize && (
-											<p className="text-xs text-gray-500">
-												File size: {formatFileSize(gifSize)}
-											</p>
+											<p className="text-xs text-gray-500">File size: {formatFileSize(gifSize)}</p>
 										)}
 									</div>
 								</div>
@@ -458,7 +450,7 @@ export default function EmojiWiggler() {
 							onClick={downloadGif}
 							disabled={!gifUrl}
 							variant="outline"
-							className="cursor-pointer mt-4 w-full border-gray-800 bg-transparent text-white hover:border-gray-1000 disabled:border-gray-900 disabled:text-gray-600"
+							className="hover:border-gray-1000 mt-4 w-full cursor-pointer border-gray-800 bg-transparent text-white disabled:border-gray-900 disabled:text-gray-600"
 							size="lg"
 						>
 							<Download className="mr-2 h-4 w-4" />

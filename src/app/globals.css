@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
+t {
 	/* Updated color scheme for playful emoji wiggler theme */
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);

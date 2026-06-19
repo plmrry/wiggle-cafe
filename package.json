@@ -3,6 +3,9 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
+	"imports": {
+		"#/*": "./src/*"
+	},
 	"scripts": {
 		"prebuild": "pnpm copy:ffmpeg-core",
 		"build": "next build",
