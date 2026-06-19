@@ -1,15 +1,8 @@
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
-const rootDir = resolve(import.meta.dirname, "..");
-const sourceDir = resolve(
-	rootDir,
-	"node_modules",
-	"@ffmpeg",
-	"core",
-	"dist",
-	"umd",
-);
+const rootDir = resolve(import.meta.dirname, "..", "..");
+const sourceDir = resolve(rootDir, "node_modules", "@ffmpeg", "core", "dist", "umd");
 const targetDir = resolve(rootDir, "public", "ffmpeg");
 const files = ["ffmpeg-core.js", "ffmpeg-core.wasm"];
 

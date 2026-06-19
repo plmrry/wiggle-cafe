@@ -1,7 +1,5 @@
 # [Wiggle Café](https://wiggle.cafe)
 
-
-
 Make it wiggle.
 
 ## Before

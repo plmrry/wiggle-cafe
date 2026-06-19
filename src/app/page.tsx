@@ -1,10 +1,13 @@
 "use client";
 
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
-import { Download, Sparkles, Upload } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import { Download, Sparkles, Upload } from "lucide-react";
+
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile } from "@ffmpeg/util";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -57,9 +60,7 @@ export default function EmojiWiggler() {
 					return canvas.toDataURL("image/png");
 				} catch (error) {
 					console.error("Error converting HEIF file:", error);
-					throw new Error(
-						"Failed to convert HEIF file. Your browser may not support HEIF images.",
-					);
+					throw new Error("Failed to convert HEIF file. Your browser may not support HEIF images.");
 				}
 			} else {
 				// For other formats, use FileReader as before
@@ -84,14 +85,8 @@ export default function EmojiWiggler() {
 		}
 
 		const ffmpeg = ffmpegRef.current;
-		const coreURL = new URL(
-			"/ffmpeg/ffmpeg-core.js",
-			window.location.origin,
-		).toString();
-		const wasmURL = new URL(
-			"/ffmpeg/ffmpeg-core.wasm",
-			window.location.origin,
-		).toString();
+		const coreURL = new URL("/ffmpeg/ffmpeg-core.js", window.location.origin).toString();
+		const wasmURL = new URL("/ffmpeg/ffmpeg-core.wasm", window.location.origin).toString();
 
 		ffmpeg.on("log", ({ message }) => {
 			console.log(message);
@@ -136,11 +131,7 @@ export default function EmojiWiggler() {
 					setGifSize(null);
 				} catch (error) {
 					console.error("Error processing file:", error);
-					alert(
-						error instanceof Error
-							? error.message
-							: "Failed to process the image file.",
-					);
+					alert(error instanceof Error ? error.message : "Failed to process the image file.");
 				}
 			}
 		},
@@ -164,11 +155,7 @@ export default function EmojiWiggler() {
 				setGifSize(null);
 			} catch (error) {
 				console.error("Error processing file:", error);
-				alert(
-					error instanceof Error
-						? error.message
-						: "Failed to process the image file.",
-				);
+				alert(error instanceof Error ? error.message : "Failed to process the image file.");
 			}
 		}
 	};
@@ -215,9 +202,7 @@ export default function EmojiWiggler() {
 			// Generate random seeds for unique wiggle patterns each time
 			const randomSeed1 = Math.random() * Math.PI * 2;
 			const randomSeed2 = Math.random() * Math.PI * 2;
-			console.debug(
-				`🎲 Random seeds: ${randomSeed1.toFixed(2)}, ${randomSeed2.toFixed(2)}`,
-			);
+			console.debug(`🎲 Random seeds: ${randomSeed1.toFixed(2)}, ${randomSeed2.toFixed(2)}`);
 
 			// Calculate the scaled image dimensions and maximum safe wiggle offset
 			const imageScale = 0.9;
@@ -238,10 +223,8 @@ export default function EmojiWiggler() {
 				const seedX = Math.sin(i * 12.9898 + randomSeed1) * 43758.5453;
 				const seedY = Math.sin(i * 78.233 + randomSeed2) * 43758.5453;
 
-				const rawOffsetX =
-					((seedX - Math.floor(seedX)) * 2 - 1) * maxOffsetX * wiggleIntensity;
-				const rawOffsetY =
-					((seedY - Math.floor(seedY)) * 2 - 1) * maxOffsetY * wiggleIntensity;
+				const rawOffsetX = ((seedX - Math.floor(seedX)) * 2 - 1) * maxOffsetX * wiggleIntensity;
+				const rawOffsetY = ((seedY - Math.floor(seedY)) * 2 - 1) * maxOffsetY * wiggleIntensity;
 
 				// Clamp offsets to ensure image never escapes canvas boundaries
 				const offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, rawOffsetX));
@@ -265,10 +248,7 @@ export default function EmojiWiggler() {
 				});
 
 				const frameData = await fetchFile(blob);
-				await ffmpeg.writeFile(
-					`frame${i.toString().padStart(3, "0")}.png`,
-					frameData,
-				);
+				await ffmpeg.writeFile(`frame${i.toString().padStart(3, "0")}.png`, frameData);
 			}
 			console.debug("✅ All frames generated and written to FFmpeg");
 
@@ -285,7 +265,7 @@ export default function EmojiWiggler() {
 				"-loop",
 				"0", // Loop infinitely (0 = infinite loop)
 				"-fs",
-				"90k", // File size limit: maximum 90KB
+				"60k", // File size limit
 				"output.gif", // Output filename
 			]);
 			console.debug("✅ FFmpeg encoding complete");
@@ -334,7 +314,7 @@ export default function EmojiWiggler() {
 	};
 
 	// Debounced effect to regenerate GIF when wiggle intensity changes
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Only update when wiggleIntensity changes.
+	/* oxlint-disable react/exhaustive-deps */
 	useEffect(() => {
 		if (!image || !gifUrl) return;
 
@@ -344,6 +324,7 @@ export default function EmojiWiggler() {
 
 		return () => clearTimeout(timeoutId);
 	}, [wiggleIntensity]);
+	/* oxlint-enable react/exhaustive-deps */
 
 	return (
 		<div className="min-h-screen bg-black">
@@ -351,17 +332,15 @@ export default function EmojiWiggler() {
 				<div className="mb-12 text-center">
 					<div className="mb-4 inline-flex items-center gap-2">
 						<Sparkles className="h-8 w-8 text-white" />
-						<h1 className="font-bold text-5xl text-white">Emoji Wiggler</h1>
+						<h1 className="text-5xl font-bold text-white">Wiggle Café</h1>
 						<Sparkles className="h-8 w-8 text-white" />
 					</div>
-					<p className="text-gray-400 text-lg">Make it wiggle</p>
+					<p className="text-lg text-gray-400">Make it wiggle</p>
 				</div>
 
 				<div className="grid gap-8 md:grid-cols-2">
 					<Card className="border-gray-800 bg-black p-6">
-						<h2 className="mb-4 font-semibold text-white text-xl">
-							Upload Emoji
-						</h2>
+						<h2 className="mb-4 text-xl font-semibold text-white">Upload Emoji</h2>
 						<button
 							type="button"
 							onDragOver={handleDragOver}
@@ -373,8 +352,7 @@ export default function EmojiWiggler() {
 								isDragging
 									? "scale-105 border-white bg-gray-900"
 									: "border-gray-800 hover:border-gray-600 hover:bg-gray-950"
-							}
-                `}
+							} `}
 						>
 							<input
 								ref={fileInputRef}
@@ -393,18 +371,14 @@ export default function EmojiWiggler() {
 										height={200}
 										className="mx-auto max-h-50 max-w-50"
 									/>
-									<p className="text-gray-400 text-sm">Click to change image</p>
+									<p className="text-sm text-gray-400">Click to change image</p>
 								</div>
 							) : (
 								<div className="space-y-4">
 									<Upload className="mx-auto h-16 w-16 text-gray-600" />
 									<div>
-										<p className="font-medium text-lg text-white">
-											Drop your image here
-										</p>
-										<p className="text-gray-400 text-sm">
-											or click to browse (PNG, JPEG, HEIC)
-										</p>
+										<p className="text-lg font-medium text-white">Drop your image here</p>
+										<p className="text-sm text-gray-400">or click to browse (PNG, JPEG, HEIC)</p>
 									</div>
 								</div>
 							)}
@@ -431,9 +405,7 @@ export default function EmojiWiggler() {
 					</Card>
 
 					<Card className="border-gray-800 bg-black p-6">
-						<h2 className="mb-4 font-semibold text-white text-xl">
-							Wiggling Result
-						</h2>
+						<h2 className="mb-4 text-xl font-semibold text-white">Wiggling Result</h2>
 						<div className="flex min-h-75 flex-col items-center justify-center rounded-lg border-2 border-gray-800 bg-gray-950 p-8 text-center">
 							{gifUrl ? (
 								<div className="space-y-4">
@@ -445,17 +417,10 @@ export default function EmojiWiggler() {
 										className="mx-auto max-h-50 max-w-50"
 									/>
 									<div className="space-y-1">
-										<p className="text-gray-400 text-sm">
-											Your wiggling emoji is ready
-										</p>
+										<p className="text-sm text-gray-400">Your wiggling emoji is ready</p>
 										{gifSize && (
-											<p className="text-gray-500 text-xs">
+											<p className="text-xs text-gray-500">
 												File size: {formatFileSize(gifSize)}
-												{gifSize <= 110 * 1024 && (
-													<span className="ml-2 text-green-400">
-														✓ Under 110KB
-													</span>
-												)}
 											</p>
 										)}
 									</div>
@@ -465,24 +430,17 @@ export default function EmojiWiggler() {
 									<div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-900">
 										<Sparkles className="h-8 w-8 text-gray-600" />
 									</div>
-									<p className="text-gray-400">
-										Your wiggling GIF will appear here
-									</p>
+									<p className="text-gray-400">Your wiggling GIF will appear here</p>
 								</div>
 							)}
 						</div>
 
 						<div className="mt-6 space-y-3">
 							<div className="flex items-center justify-between">
-								<label
-									htmlFor="wiggle-intensity"
-									className="font-medium text-sm text-white"
-								>
+								<label htmlFor="wiggle-intensity" className="text-sm font-medium text-white">
 									Wiggle Intensity
 								</label>
-								<span className="text-gray-400 text-sm">
-									{wiggleIntensity.toFixed(1)}x
-								</span>
+								<span className="text-sm text-gray-400">{wiggleIntensity.toFixed(1)}x</span>
 							</div>
 							<input
 								id="wiggle-intensity"
@@ -500,7 +458,7 @@ export default function EmojiWiggler() {
 							onClick={downloadGif}
 							disabled={!gifUrl}
 							variant="outline"
-							className="mt-4 w-full border-gray-800 bg-transparent text-white hover:border-gray-600 hover:bg-gray-950 disabled:border-gray-900 disabled:text-gray-600"
+							className="cursor-pointer mt-4 w-full border-gray-800 bg-transparent text-white hover:border-gray-1000 disabled:border-gray-900 disabled:text-gray-600"
 							size="lg"
 						>
 							<Download className="mr-2 h-4 w-4" />
